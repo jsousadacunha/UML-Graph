@@ -24,9 +24,17 @@ text {
 
 <script>
 
+var min = 0;
+
 var graph = {
     nodes: [],
     links: []
+}
+
+const colors = {
+    Entrypoint: 1,
+    Node: 5,
+    Exitpoint: 10
 }
 
 $(document).ready(function(){
@@ -51,153 +59,196 @@ $(document).ready(function(){
             var res = []
 
 
-            get_from(graph.links, node_filter, res)
+            get_from(graph.links, node_filter, res, -1, 0, 0, 0)
 
-            get_to(graph.links, node_filter, res)
+            get_to(graph.links, node_filter, res, 0, 0, 1, 0)
 
             var nodes = get_nodes(graph.nodes, res)
 
+            console.log(res)
+            console.log(min)
             console.log(nodes)
 
-            graph.nodes = nodes
-            graph.links = res
-
             var svg = d3.select("svg"),
-            width = +svg.attr("width"),
-            height = +svg.attr("height");
+                width = +svg.attr("width"),
+                height = +svg.attr("height");
 
             var color = d3.scaleOrdinal(d3.schemeCategory20);
 
-            var simulation = d3.forceSimulation()
-                .force("link", d3.forceLink().id(function(d) { return d.id; }))
-                .force("charge", d3.forceManyBody())
-                .force("center", d3.forceCenter(width / 2, height / 2));
+            var norm = Math.abs(min)
+
+            // graph.nodes = nodes
+            // graph.links = res
+
+            // var simulation = d3.forceSimulation()
+            //     .force("link", d3.forceLink().id(function(d) { return d.id; }))
+            //     .force("charge", d3.forceManyBody())
+            //     .force("center", d3.forceCenter(width / 2, height / 2));
 
 
-            var link = svg.append("g")
-                .attr("class", "links")
-                .selectAll("line")
-                .data(graph.links)
-                .enter().append("line")
-                .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+            // var link = svg.append("g")
+            //     .attr("class", "links")
+            //     .selectAll("line")
+            //     .data(graph.links)
+            //     .enter().append("line")
+            //     .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-            var node = svg.append("g")
-                .attr("class", "nodes")
-                .selectAll("g")
-                .data(graph.nodes)
-                .enter().append("g")
+            // var node = svg.append("g")
+            //     .attr("class", "nodes")
+            //     .selectAll("g")
+            //     .data(graph.nodes)
+            //     .enter().append("g")
 
-            var circles = node.append("circle")
-                .attr("r", 10)
-                .attr("fill", function(d) { return color(d.group); })
-                .call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
+            // var circles = node.append("rect")
+            //     // .attr("x", 0)
+            //     // .attr("y", 0)
+            //     .attr("width", 10)
+            //     .attr("height", 10)
+            //     .attr("fill", function(d) { return color(d.group); })
+            //     // .call(d3.drag()
+            //     //     .on("start", dragstarted)
+            //     //     .on("drag", dragged)
+            //     //     .on("end", dragended));
 
-            var labels = node.append("text")
-                .text(function(d) {
-                    return d.id;
-                })
-                .attr('x', 10)
-                .attr('y', 3);
+            // var labels = node.append("text")
+            //     .text(function(d) {
+            //         return d.id;
+            //     })
+            //     .attr('x', 10)
+            //     .attr('y', 3);
 
-            node.append("title")
-                .text(function(d) { return d.id; });
+            // node.append("title")
+            //     .text(function(d) { return d.id; });
 
-            simulation
-                .nodes(graph.nodes)
-                .on("tick", ticked);
+            // simulation
+            //     .nodes(graph.nodes)
+            //     .on("tick", ticked);
 
-            simulation.force("link")
-                .links(graph.links);
+            // simulation.force("link")
+            //     .links(graph.links);
 
-                function ticked() {
-            link
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
+            // function ticked() {
+            //     link
+            //         .attr("x1", function(d) { return d.source.x; })
+            //         .attr("y1", function(d) { return d.source.y; })
+            //         .attr("x2", function(d) { return d.target.x; })
+            //         .attr("y2", function(d) { return d.target.y; });
 
-            node
-                .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-                })
-            }
+            //     node
+            //         .attr("transform", function(d) {
+            //         return "translate(" + d.x + "," + d.y + ")";
+            //         })
+            // }
 
-            function dragstarted(d) {
-                if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
+            // function dragstarted(d) {
+            //     if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            //     d.fx = d.x;
+            //     d.fy = d.y;
+            // }
 
-            function dragged(d) {
-                d.fx = d3.event.x;
-                d.fy = d3.event.y;
-            }
+            // function dragged(d) {
+            //     d.fx = d3.event.x;
+            //     d.fy = d3.event.y;
+            // }
 
-            function dragended(d) {
-                if (!d3.event.active) simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }  
+            // function dragended(d) {
+            //     if (!d3.event.active) simulation.alphaTarget(0);
+            //     d.fx = null;
+            //     d.fy = null;
+            // }  
         }       
     });
 
 });
 
-function create_node(node_type, node_id) {
+/**
+* Creates new node object with coordinates
+*/
+function create_node(node_type, node_id, x, y) {
     var node = {
         type: node_type,
         id: node_id,
-        group: node_type.length
+        color: $(colors).attr(node_type),
+        x: x,
+        y: y
     }
 
     return node
 }
 
-function create_link(s, t) {
+/**
+* Creates new link object with coordinates of source and target nodes
+*/
+function create_link(s, t, x_s, y_s, x_t, y_t) {
     var link = {
         source: s,
         target: t,
-        value: 2
+        value: 2,
+        x1: x_s,
+        y1: y_s,
+        x2: x_t,
+        y2: y_t
     }
 
     return link
 }
 
-function get_from(links, node_name, arr) {
+/**
+* Computes recursively all source nodes from current node until first node in graph
+*/
+function get_from(links, node_name, arr, x_s, y_s, x_t, y_t) {
     links.forEach(function(l, i) {
         if (l.target === node_name) {
-            arr.push(l)       
+            l.x1 = x_s
+            l.y1 = y_s
+            l.x2 = x_t
+            l.y2 = y_t
+            arr.push(l)
+            min = Math.min(x_s, min)
             if (l.source !== undefined) {
-                get_from(links, l.source, arr)
+                get_from(links, l.source, arr, x_s-1, y_s, x_t-1, y_t)
             }
+            y_s++
         }
     });
-
-    return arr
 }
 
-function get_to(links, node_name, arr) {
+/**
+* Computes recursively all target nodes from current node until last node in graph
+*/
+function get_to(links, node_name, arr, x_s, y_s, x_t, y_t) {
     links.forEach(function(l) {
         if (l.source === node_name) {
+            l.x1 = x_s
+            l.y1 = y_s
+            l.x2 = x_t
+            l.y2 = y_t
             arr.push(l)
             if (l.target !== undefined) {
-                get_to(links, l.target, arr)
+                get_to(links, l.target, arr, x_s+1, y_s, x_t+1, y_t)
             }
+            y_t++
         }
     });
-
-    return arr
 }
 
+/**
+* Computes identified nodes from links and set its coordinates
+*/
 function get_nodes(nodes, links) {
     var res = []
     $.each(links, function(i, l) {
         $.each(nodes, function(j, n) {
-            if ($.inArray(n, res) === -1 && (l.source === n.id || l.target === n.id)) {
-                res.push(n)
+            if ($.inArray(n, res) === -1) {
+                if (l.source === n.id) {
+                    n.x = l.x1
+                    n.y = l.y1
+                    res.push(n)
+                } else if (l.target === n.id) {
+                    n.x = l.x2
+                    n.y = l.y2
+                    res.push(n)
+                }
             }
         });
     });
