@@ -32,53 +32,35 @@ var graph = {
 $(document).ready(function(){
     $.ajax({
         type: "GET" ,
-        url: "dcp-bus-camel-comments.xmi" ,
-        dataType: "xml" ,
-        success: function(xml) {
+        url: "routes.csv" ,
+        dataType: "text" ,
+        success: function(csv) {
 
-            // foreach node in xml
-            $(xml).find('subvertex').each(function(i, sv) {
-                if ($(sv).attr('xmi:type') != 'uml:Pseudostate') {
-                    var node_name = $(sv).attr('name')
+            var lines = csv.split(/\r\n|\n/)
+            var header = lines[0].split(';')
 
-                    graph.nodes.push(create_node(node_name));
-
-                    // find source nodes
-                    $(xml).find('subvertex').each(function(j, from_sv) {
-                        $(from_sv).find("transition").each(function(k, from_t) {
-                            if ($(from_t).attr('target') === $(sv).attr('xmi:id')) {
-                                graph.links.push(create_link($(from_sv).attr('name'), node_name))
-                            }
-                        });
-                    });
-
-                    // find target nodes
-                    $(sv).find("transition").each(function(k, t) {
-                        $(xml).find('subvertex').each(function(i, sv_name) {
-                            if ($(sv_name).attr('xmi:type') != 'uml:Pseudostate' && $(sv_name).attr('xmi:id') === ($(t).attr('target'))) {
-                                graph.links.push(create_link(node_name, $(sv_name).attr('name')))
-                            }
-                        });
-                    });
+            for (var i=1; i<lines.length; i++) {
+                var entries = lines[i].split(';')
+                graph.nodes.push(create_node(entries[0], entries[1]))
+                for (var j=3; j<entries.length; j+=2) {
+                    graph.links.push(create_link(entries[1], entries[j]))
                 }
-            });
-
-            console.log(graph)
+            }
 
             var node_filter = "datastoreDelete"
             var res = []
 
-            res.concat(get_from(graph.links, node_filter, res))
-            res.concat(get_to(graph.links, node_filter, res))
+
+            get_from(graph.links, node_filter, res)
+
+            get_to(graph.links, node_filter, res)
+
             var nodes = get_nodes(graph.nodes, res)
 
-            console.log(res)
             console.log(nodes)
 
-            // graph.nodes = nodes
-            // graph.links = res
-
-            console.log(graph)
+            graph.nodes = nodes
+            graph.links = res
 
             var svg = d3.select("svg"),
             width = +svg.attr("width"),
@@ -113,7 +95,7 @@ $(document).ready(function(){
                     .on("drag", dragged)
                     .on("end", dragended));
 
-            var lables = node.append("text")
+            var labels = node.append("text")
                 .text(function(d) {
                     return d.id;
                 })
@@ -164,10 +146,11 @@ $(document).ready(function(){
 
 });
 
-function create_node(i) {
+function create_node(node_type, node_id) {
     var node = {
-        id: i,
-        group: 2
+        type: node_type,
+        id: node_id,
+        group: node_type.length
     }
 
     return node
@@ -183,37 +166,37 @@ function create_link(s, t) {
     return link
 }
 
-function get_from(links, source, res) {
-    links.forEach(function(l) {
-        if (l.target === source) {            
+function get_from(links, node_name, arr) {
+    links.forEach(function(l, i) {
+        if (l.target === node_name) {
+            arr.push(l)       
             if (l.source !== undefined) {
-                get_from(links, l.source, res)
+                get_from(links, l.source, arr)
             }
-            res.push(l)
         }
     });
 
-    return res
+    return arr
 }
 
-function get_to(links, source, res) {
+function get_to(links, node_name, arr) {
     links.forEach(function(l) {
-        if (l.source === source) {
-            res.push(l)
+        if (l.source === node_name) {
+            arr.push(l)
             if (l.target !== undefined) {
-                get_from(links, l.target, res)
+                get_to(links, l.target, arr)
             }
         }
     });
 
-    return res
+    return arr
 }
 
 function get_nodes(nodes, links) {
     var res = []
-    links.forEach(function(l) {
-        nodes.forEach(function(n) {
-            if (l.source === n.id || l.target === n.id) {
+    $.each(links, function(i, l) {
+        $.each(nodes, function(j, n) {
+            if ($.inArray(n, res) === -1 && (l.source === n.id || l.target === n.id)) {
                 res.push(n)
             }
         });

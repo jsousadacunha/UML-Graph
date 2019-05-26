@@ -11,13 +11,14 @@ $(document).ready(function(){
         dataType: "xml" ,
         success: function(xml) {
 
+            // Entrypoints
             $(xml).find("connectionPoint[kind='entryPoint']").each(function(i, ep) {
                 var node = "Entrypoint;" + $(ep).attr("name")
 
                 // fetch all target states from current entrypoint
                 $(xml).find("region[id='_fef6KH4CEemlApPIp_vRMQ']").children("transition[source='"+$(ep).attr("id")+"']").each(function(j, t){
                     $(xml).find("subvertex[id='"+$(t).attr("target")+"']").each(function(k, sv) {
-                        node += ";" + $(sv).attr("name")
+                        node += ";Node;" + $(sv).attr("name")
                     });
                 });
 
@@ -43,6 +44,13 @@ $(document).ready(function(){
                     })
 
                     document.write(node + "<br />")
+            });
+
+            // Exitpoints
+            $(xml).find("connectionPoint[kind='exitPoint']").each(function(i, ep) {
+                var node = "Exitpoint;" + $(ep).attr("name")
+
+                document.write(node + "<br />")
             });
 
             /**
