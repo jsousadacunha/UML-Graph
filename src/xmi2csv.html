@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
+.nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
+
+text {
+    font-family: sans-serif;
+    font-size: 10px;
+}
+    
+</style>
+<svg width="2048" height="1024"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script>
+
+$(document).ready(function(){
+    $.ajax({
+        type: "GET" ,
+        url: "machine-state-diagram.xmi" ,
+        dataType: "xml" ,
+        success: function(xml) {
+
+            $(xml).find("connectionPoint[kind='entryPoint']").each(function(i, ep) {
+                var node = "Entrypoint;" + $(ep).attr("name")
+
+                // fetch all target states from current entrypoint
+                $(xml).find("region[id='_fef6KH4CEemlApPIp_vRMQ']").children("transition[source='"+$(ep).attr("id")+"']").each(function(j, t){
+                    $(xml).find("subvertex[id='"+$(t).attr("target")+"']").each(function(k, sv) {
+                        node += ";" + $(sv).attr("name")
+                    });
+                });
+
+                document.write(node + "<br />")
+            });
+
+            // foreach state node in xml
+            $(xml).find("subvertex[type='uml:State']").each(function(i, sv) {
+                    var node = "Node;" + $(sv).attr('name')
+
+                    // fetch all target states from current node by its internal transitions
+                    $(sv).find("transition").each(function(j, t) {
+                        node += fetch_state_nodes(xml, $(t).attr('target'))
+                        node += fetch_exitpoints(xml, $(t).attr('target'))
+                    })
+
+                    // fetch all target states from current node by its external transitions
+                    $(xml).find("region[id='_fef6KH4CEemlApPIp_vRMQ']").children("transition").each(function(k, t){
+                        if ($(t).attr("source") === $(sv).attr('id')) {
+                            node += fetch_state_nodes(xml, $(t).attr('target'))
+                            node += fetch_exitpoints(xml, $(t).attr('target'))
+                        }
+                    })
+
+                    document.write(node + "<br />")
+            });
+
+            /**
+             * Retrieves state nodes by id
+             */
+            function fetch_state_nodes(xml, node_id) {
+                value = ""
+                $(xml).find("subvertex[type='uml:State']").each(function(i, sv) {
+                    if ($(sv).attr('id') === node_id) {
+                        value += ";Node;" + $(sv).attr('name')
+                    }
+                });
+
+                return value
+            }
+
+            /**
+             * Retrieves exitpoints by id
+             */
+             function fetch_exitpoints(xml, node_id) {
+                value = ""
+                $(xml).find("connectionPoint[kind='exitPoint']").each(function(i, ep) {
+                    if ($(ep).attr('id') === node_id) {
+                        value += ";Exitpoint;" + $(ep).attr('name')
+                    }
+                });
+
+                return value
+            }
+
+        }
+    }); 
+});            
+</script>
